@@ -1,0 +1,80 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+// Función para convertir una cadena a minúsculas
+string a_minusculas(const string& cadena) {
+    string resultado = cadena;
+    transform(resultado.begin(), resultado.end(), resultado.begin(),
+              [](unsigned char c) { return tolower(c); });
+    return resultado;
+}
+
+// Función para resaltar las coincidencias en color verde
+string resaltar_coincidencias(const string& linea, const string& palabra, int& contador) {
+    string resultado;
+    string linea_minusculas = a_minusculas(linea);
+    string palabra_minusculas = a_minusculas(palabra);
+    size_t pos = 0, inicio = 0;
+
+    while ((pos = linea_minusculas.find(palabra_minusculas, inicio)) != string::npos) {
+        resultado += linea.substr(inicio, pos - inicio);
+        resultado += "\033[32m" + linea.substr(pos, palabra.length()) + "\033[0m";
+        inicio = pos + palabra.length();
+        contador++;
+    }
+    resultado += linea.substr(inicio);
+    return resultado;
+}
+
+int main() {
+    string nombre_archivo = "archivo.txt";
+    ifstream archivo;
+    string palabra;
+    char opcion;
+
+    do {
+        archivo.open(nombre_archivo);
+        if (!archivo.is_open()) {
+            cerr << "Error: No se pudo abrir el archivo \"" << nombre_archivo << "\"." << endl;
+            return 1;
+        }
+
+        // Solicitar palabra al usuario
+        do {
+            cout << "Ingrese la palabra o carácter a buscar: ";
+            getline(cin, palabra);
+            if (palabra.empty()) {
+                cout << "La entrada no puede estar vacía. Por favor, intente de nuevo." << endl;
+            }
+        } while (palabra.empty());
+
+        string linea;
+        int total_coincidencias = 0;
+
+        cout << "\nResultados:\n" << endl;
+        while (getline(archivo, linea)) {
+            int contador_linea = 0;
+            string linea_resaltada = resaltar_coincidencias(linea, palabra, contador_linea);
+            cout << linea_resaltada << endl;
+            total_coincidencias += contador_linea;
+        }
+
+        cout << "\nTotal de coincidencias para \"" << palabra << "\": " << total_coincidencias << endl;
+
+        archivo.close();
+
+        // Preguntar al usuario si desea realizar otra búsqueda
+        cout << "\n¿Desea buscar otra palabra o carácter? (S/N): ";
+        cin >> opcion;
+        cin.ignore(); // Limpiar el buffer de entrada
+        cout << endl;
+
+    } while (opcion == 'S' || opcion == 's');
+
+    cout << "Programa finalizado." << endl;
+    return 0;
+}
